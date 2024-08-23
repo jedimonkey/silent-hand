@@ -1,37 +1,11 @@
-import { DB_NAME, STORE_NAME, COMPLETED_STORE_NAME } from "@/components/config";
+import { STORE_NAME, COMPLETED_STORE_NAME } from "@/components/config";
 import { ExtendableMessageEvent, Task, TaskConfig } from "./types";
-
-let db: IDBDatabase | null = null;
+import { openDB } from "@/utils/db";
 
 let swInstanceId: string;
 
 function generateInstanceId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
-}
-
-// Open IndexedDB
-function openDB() {
-  return new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1);
-
-    request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      db.createObjectStore(STORE_NAME, { keyPath: "id", autoIncrement: true });
-      db.createObjectStore(COMPLETED_STORE_NAME, {
-        keyPath: "id",
-        autoIncrement: true,
-      });
-    };
-
-    request.onsuccess = (event: Event) => {
-      db = (event.target as IDBOpenDBRequest).result;
-      resolve(db);
-    };
-
-    request.onerror = (event: Event) => {
-      reject("IndexedDB error: " + (event.target as IDBOpenDBRequest).error);
-    };
-  });
 }
 
 // Add task to queue in IndexedDB
@@ -47,9 +21,7 @@ async function enqueueTask(task: TaskConfig) {
     executedAt: null,
     status: "pending",
   };
-  console.log("adding task", taskWithDates);
   const returnVal = store.add(taskWithDates);
-  console.log("enqueued", returnVal);
 }
 
 // Get the next task from the queue without removing it
@@ -99,9 +71,9 @@ async function moveTaskToCompleted(task: Task) {
   const taskStore = transaction.objectStore(STORE_NAME);
   const completedStore = transaction.objectStore(COMPLETED_STORE_NAME);
   task.updatedAt = new Date();
-  console.log("finalising task", task.createdAt, task.updatedAt);
-  await taskStore.delete(task.id);
-  await completedStore.add(task);
+  // console.log("finalising task", task.createdAt, task.updatedAt);
+  taskStore.delete(task.id);
+  completedStore.add(task);
 }
 
 // Send task update to all clients
@@ -111,7 +83,7 @@ async function sendTaskUpdate(task: Task) {
       self as unknown as ServiceWorkerGlobalScope
     ).clients.matchAll();
     clients.forEach((client) => {
-      console.log("send to each client", client);
+      // console.log("send to each client", client);
       client.postMessage({
         type: "TASK_UPDATE",
         task: task,
@@ -147,7 +119,6 @@ async function performTask(task: Task) {
 
     task.status = "complete";
     task.result = result;
-    console.log("updated task", task);
     await moveTaskToCompleted(task);
     await sendTaskUpdate(task);
   } catch (error) {
@@ -164,8 +135,7 @@ async function performTask(task: Task) {
 }
 
 // Monitor the queue and perform tasks
-export function monitorQueue() {
-  console.log("setting up monitoring queue");
+function monitorQueue() {
   setInterval(async () => {
     const task = await getNextTask();
     if (task) {
@@ -178,7 +148,12 @@ export function monitorQueue() {
 // Initialize the instance ID when the service worker starts
 self.addEventListener("install", (event) => {
   swInstanceId = generateInstanceId();
-  console.log("Service Worker instance ID:", swInstanceId);
+  console.log(
+    "Service Worker instance ID:",
+    swInstanceId,
+    "installing monitoring"
+  );
+  monitorQueue();
 });
 
 // Message event listener
@@ -186,7 +161,6 @@ self.addEventListener("message", (event: ExtendableMessageEvent) => {
   const data = event.data;
 
   if (data && data.action === "enqueue") {
-    console.log("got one", data.task);
     enqueueTask(data.task);
   }
 });

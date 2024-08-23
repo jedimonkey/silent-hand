@@ -1,7 +1,7 @@
 import { precacheAndRoute } from "workbox-precaching/precacheAndRoute";
 import { ExtendableMessageEvent, Task } from "./types";
 import { randomUUID } from "crypto";
-import { monitorQueue } from "./lib";
+import "./lib";
 
 // public/service-worker.ts
 
@@ -29,4 +29,4 @@ precacheAndRoute(process.env.NODE_ENV !== "development" ? precache : []);
 // IndexedDB setup
 
 // Start monitoring the queue
-monitorQueue();
+// monitorQueue();

@@ -1,48 +1,36 @@
 import { useState, useEffect } from "react";
 import { Task } from "../../service-worker/types";
-import { DB_NAME, STORE_NAME } from "./config";
+import { STORE_NAME } from "./config";
+import { openDB, closeDB } from "../utils/db";
 
 export function useRunningTasks() {
   const [runningTasks, setRunningTasks] = useState<Task[]>([]);
 
   useEffect(() => {
-    let db: IDBDatabase | null = null;
+    const fetchRunningTasks = async () => {
+      try {
+        const db = await openDB();
+        const transaction = db.transaction(STORE_NAME, "readonly");
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.getAll();
 
-    const openDB = () => {
-      const request = indexedDB.open(DB_NAME);
-      request.onsuccess = (event) => {
-        db = (event.target as IDBOpenDBRequest).result;
-        fetchRunningTasks();
-      };
-      request.onerror = (event) => {
-        console.error(
-          "Error opening database:",
-          (event.target as IDBOpenDBRequest).error
-        );
-      };
-    };
+        request.onsuccess = (event) => {
+          const tasks = (event.target as IDBRequest).result as Task[];
+          const running = tasks.filter(
+            (task) => task.status === "executing" || task.status === "pending"
+          );
+          setRunningTasks(running);
+        };
 
-    const fetchRunningTasks = () => {
-      if (!db) return;
-
-      const transaction = db.transaction(STORE_NAME, "readonly");
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.getAll();
-
-      request.onsuccess = (event) => {
-        const tasks = (event.target as IDBRequest).result as Task[];
-        const running = tasks.filter(
-          (task) => task.status === "executing" || task.status === "pending"
-        );
-        setRunningTasks(running);
-      };
-
-      request.onerror = (event) => {
-        console.error(
-          "Error fetching tasks:",
-          (event.target as IDBRequest).error
-        );
-      };
+        request.onerror = (event) => {
+          console.error(
+            "Error fetching tasks:",
+            (event.target as IDBRequest).error
+          );
+        };
+      } catch (error) {
+        console.error("Error opening database:", error);
+      }
     };
 
     const handleTaskUpdate = (event: MessageEvent) => {
@@ -51,14 +39,12 @@ export function useRunningTasks() {
       }
     };
 
-    openDB();
+    fetchRunningTasks();
     navigator.serviceWorker.addEventListener("message", handleTaskUpdate);
 
     return () => {
       navigator.serviceWorker.removeEventListener("message", handleTaskUpdate);
-      if (db) {
-        db.close();
-      }
+      closeDB();
     };
   }, []);
 
