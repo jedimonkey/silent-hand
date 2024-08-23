@@ -146,15 +146,13 @@ function monitorQueue() {
 }
 
 // Initialize the instance ID when the service worker starts
-self.addEventListener("install", (event) => {
-  swInstanceId = generateInstanceId();
-  console.log(
-    "Service Worker instance ID:",
-    swInstanceId,
-    "installing monitoring"
-  );
-  monitorQueue();
-});
+swInstanceId = generateInstanceId();
+console.log(
+  "Service Worker instance ID:",
+  swInstanceId,
+  "installing monitoring"
+);
+monitorQueue();
 
 // Message event listener
 self.addEventListener("message", (event: ExtendableMessageEvent) => {
