@@ -6,7 +6,7 @@ const CompletedTasks: React.FC = () => {
   const { totalTasks, tasks } = useCompletedTasks(5);
   return (
     <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-xl shadow-md border border-gray-300">
-      <h2 className="text-2xl font-bold mb-4 text-center font-bold dark:text-white">
+      <h2 className="text-2xl mb-4 text-center font-bold dark:text-white">
         Completed Tasks (Total {totalTasks})
       </h2>
       <table className="w-full border-collapse">
