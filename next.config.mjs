@@ -2,6 +2,9 @@ import withWorkbox from "next-with-workbox";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = withWorkbox({
+  experimental: {
+    swcPlugins: [["glass-js/swc", {}]],
+  },
   workbox: {
     swSrc: "service-worker/service-worker.ts",
     swDest: "sw.js",

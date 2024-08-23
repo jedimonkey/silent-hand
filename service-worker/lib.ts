@@ -1,8 +1,8 @@
 import { ExtendableMessageEvent, Task, TaskConfig } from "./types";
 
-const DB_NAME = "taskQueueDB";
-const STORE_NAME = "tasks";
-const COMPLETED_STORE_NAME = "completedTasks";
+export const DB_NAME = "taskQueueDB";
+export const STORE_NAME = "tasks";
+export const COMPLETED_STORE_NAME = "completedTasks";
 let db: IDBDatabase | null = null;
 
 let swInstanceId: string;
