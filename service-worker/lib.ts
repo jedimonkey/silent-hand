@@ -1,8 +1,6 @@
+import { DB_NAME, STORE_NAME, COMPLETED_STORE_NAME } from "@/components/config";
 import { ExtendableMessageEvent, Task, TaskConfig } from "./types";
 
-export const DB_NAME = "taskQueueDB";
-export const STORE_NAME = "tasks";
-export const COMPLETED_STORE_NAME = "completedTasks";
 let db: IDBDatabase | null = null;
 
 let swInstanceId: string;
@@ -41,7 +39,7 @@ async function enqueueTask(task: TaskConfig) {
   const db = await openDB();
   const transaction = db.transaction(STORE_NAME, "readwrite");
   const store = transaction.objectStore(STORE_NAME);
-  const now = new Date().toISOString();
+  const now = new Date();
   const taskWithDates = {
     ...task,
     createdAt: now,
@@ -87,7 +85,7 @@ async function updateTaskInStorage(updatedTask: Task) {
   const db = await openDB();
   const transaction = db.transaction(STORE_NAME, "readwrite");
   const store = transaction.objectStore(STORE_NAME);
-  updatedTask.updatedAt = new Date().toISOString();
+  updatedTask.updatedAt = new Date();
   await store.put(updatedTask);
 }
 
@@ -100,7 +98,8 @@ async function moveTaskToCompleted(task: Task) {
   );
   const taskStore = transaction.objectStore(STORE_NAME);
   const completedStore = transaction.objectStore(COMPLETED_STORE_NAME);
-
+  task.updatedAt = new Date();
+  console.log("finalising task", task.createdAt, task.updatedAt);
   await taskStore.delete(task.id);
   await completedStore.add(task);
 }
@@ -128,7 +127,7 @@ async function performTask(task: Task) {
   try {
     console.log("performing fetch", task.url);
     task.status = "executing";
-    task.executedAt = new Date().toISOString();
+    task.executedAt = new Date();
     task.instanceId = swInstanceId;
     await updateTaskInStorage(task);
     await sendTaskUpdate(task);
@@ -142,7 +141,9 @@ async function performTask(task: Task) {
     const result = await response.json();
 
     // Add a 10-second delay
-    await new Promise((resolve) => setTimeout(resolve, 10000));
+    await new Promise((resolve) =>
+      setTimeout(resolve, Math.random() * 10000 + 2000)
+    );
 
     task.status = "complete";
     task.result = result;

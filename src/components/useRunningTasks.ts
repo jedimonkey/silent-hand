@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Task } from "./types";
-import { DB_NAME, STORE_NAME } from "./lib";
+import { Task } from "../../service-worker/types";
+import { DB_NAME, STORE_NAME } from "./config";
 
 export function useRunningTasks() {
   const [runningTasks, setRunningTasks] = useState<Task[]>([]);
