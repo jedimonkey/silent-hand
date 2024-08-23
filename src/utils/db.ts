@@ -1,4 +1,8 @@
-import { COMPLETED_STORE_NAME, DB_NAME, STORE_NAME } from "./config";
+import {
+  COMPLETED_STORE_NAME,
+  DB_NAME,
+  STORE_NAME,
+} from "../service-worker/config";
 
 let db: IDBDatabase | null = null;
 

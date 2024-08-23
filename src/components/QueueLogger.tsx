@@ -6,7 +6,7 @@ import {
   Task,
   TaskConfig,
   TaskUpdateMessageData,
-} from "../../service-worker/types";
+} from "../service-worker/types";
 
 export const QueueLogger = () => {
   useEffect(() => {

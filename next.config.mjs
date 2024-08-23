@@ -6,7 +6,7 @@ const nextConfig = withWorkbox({
     swcPlugins: [["glass-js/swc", {}]],
   },
   workbox: {
-    swSrc: "service-worker/service-worker.ts",
+    swSrc: "src/service-worker/service-worker.ts",
     swDest: "sw.js",
     // clientsClaim: true,
     // skipWaiting: true,

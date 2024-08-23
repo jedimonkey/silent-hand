@@ -1,6 +1,6 @@
 "use client";
 
-import { ExtendableMessageData, TaskConfig } from "../../service-worker/types";
+import { ExtendableMessageData, TaskConfig } from "../service-worker/types";
 
 function addTaskToQueue(task: TaskConfig) {
   if (navigator.serviceWorker.controller) {
