@@ -34,10 +34,6 @@ export interface ExtendableMessageData {
   task: TaskConfig;
 }
 
-export interface ExtendableMessageEvent extends MessageEvent {
-  data: ExtendableMessageData;
-}
-
 export interface TaskUpdateMessageData {
   type: "TASK_UPDATE";
   task: Task;

@@ -1,24 +1,7 @@
-import { precacheAndRoute } from "workbox-precaching/precacheAndRoute";
-import "./lib";
+import { registerTask } from "./lib";
 
-declare global {
-  interface ServiceWorkerGlobalScope {
-    __WB_MANIFEST: string[];
-  }
-}
-
-declare const self: ServiceWorkerGlobalScope;
-
-self.addEventListener("install", (event) => {
-  self.skipWaiting();
+registerTask("sleep", async (task) => {
+  await new Promise((resolve) =>
+    setTimeout(() => resolve("Paused for 1s"), 1000)
+  );
 });
-
-self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
-});
-
-const precache = [];
-precache.push(...self.__WB_MANIFEST);
-console.log("precache", process.env.NODE_ENV !== "development" ? precache : []);
-// precacheAndRoute([]);
-precacheAndRoute(process.env.NODE_ENV !== "development" ? precache : []);

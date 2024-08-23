@@ -1,11 +1,46 @@
+import { precacheAndRoute } from "workbox-precaching";
 import { STORE_NAME, COMPLETED_STORE_NAME } from "./config";
-import { ExtendableMessageEvent, Task, TaskConfig } from "./types";
+import { ExtendableMessageData, Task, TaskConfig } from "./types";
 import { openDB } from "@/utils/db";
+
+declare global {
+  interface ServiceWorkerGlobalScope {}
+}
+export type ExtendableMessageEvent = MessageEvent<ExtendableMessageData>;
+
+declare const self: ServiceWorkerGlobalScope;
+
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+const precache = [];
+precache.push(...self.__WB_MANIFEST);
+console.log("precache", process.env.NODE_ENV !== "development" ? precache : []);
+// precacheAndRoute([]);
+precacheAndRoute(process.env.NODE_ENV !== "development" ? precache : []);
 
 let swInstanceId: string;
 
 function generateInstanceId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+// Add this near the top of the file, after the imports
+const taskHandlers: Record<string, (task: Task) => Promise<any>> = {
+  fetch: performFetchTask,
+};
+
+// Add this function to register new task types
+function registerTask(
+  taskName: string,
+  callback: (task: Task) => Promise<unknown>
+) {
+  taskHandlers[taskName] = callback;
 }
 
 // Add task to queue in IndexedDB
@@ -105,19 +140,11 @@ async function performTask(task: Task) {
     await sendTaskUpdate(task);
 
     let result;
-    switch (task.type) {
-      case "fetch":
-        result = await performFetchTask(task);
-        break;
-      // Add other task types here
-      default:
-        throw new Error(`Unknown task type: ${task.type}`);
+    if (taskHandlers[task.type]) {
+      result = await taskHandlers[task.type](task);
+    } else {
+      throw new Error(`Unregistered task type: ${task.type}`);
     }
-
-    // Add a 10-second delay
-    await new Promise((resolve) =>
-      setTimeout(resolve, Math.random() * 10000 + 2000)
-    );
 
     task.status = "complete";
     task.result = result;
@@ -125,7 +152,7 @@ async function performTask(task: Task) {
     await sendTaskUpdate(task);
   } catch (error) {
     if (error instanceof Error) {
-      console.error("Task failed:", error);
+      console.log("Task failed:", error);
       task.status = "failed";
       task.error = error.message;
       await moveTaskToCompleted(task);
@@ -147,7 +174,10 @@ async function performFetchTask(task: Task): Promise<any> {
     headers: headers || {},
     body: body ? JSON.stringify(body) : null,
   });
-
+  // Add a 10-second delay
+  await new Promise((resolve) =>
+    setTimeout(resolve, Math.random() * 10000 + 2000)
+  );
   return await response.json();
 }
 
@@ -167,15 +197,19 @@ swInstanceId = generateInstanceId();
 console.log(
   "Service Worker instance ID:",
   swInstanceId,
-  "installing monitoring"
+  "Installing monitoring",
+  "TaskHandlers: ",
+  Object.keys(taskHandlers)
 );
 monitorQueue();
 
 // Message event listener
-self.addEventListener("message", (event: ExtendableMessageEvent) => {
-  const data = event.data;
+self.addEventListener("message", (event) => {
+  const data: ExtendableMessageData = event.data;
 
   if (data && data.action === "enqueue") {
     enqueueTask(data.task);
   }
 });
+
+export { registerTask };
