@@ -35,8 +35,13 @@ async function enqueueTask(task: Task) {
   const db = await openDB();
   const transaction = db.transaction(STORE_NAME, "readwrite");
   const store = transaction.objectStore(STORE_NAME);
-  console.log("adding task", task);
-  const returnVal = store.add(task);
+  const taskWithDates = {
+    ...task,
+    createdAt: new Date().toISOString(),
+    executedAt: null,
+  };
+  console.log("adding task", taskWithDates);
+  const returnVal = store.add(taskWithDates);
   console.log("enqueued", returnVal);
 }
 
@@ -77,6 +82,7 @@ async function updateTaskInStorage(updatedTask: Task) {
 async function performTask(task: Task) {
   try {
     console.log("performing fetch", task.url);
+    task.executedAt = new Date().toISOString();
     const response = await fetch(task.url, {
       method: task.method || "GET",
       headers: task.headers || {},
@@ -84,6 +90,10 @@ async function performTask(task: Task) {
     });
 
     const result = await response.json();
+
+    // Add a 10-second delay
+    await new Promise((resolve) => setTimeout(resolve, 10000));
+
     task.status = "complete";
     task.result = result;
     console.log("updated task", task);
@@ -94,9 +104,24 @@ async function performTask(task: Task) {
       task.status = "failed";
       task.error = error.message;
       await updateTaskInStorage(task);
-      return;
+    } else {
+      console.error("unknown error", error);
     }
-    console.error("unknown error", error);
+  } finally {
+    // Call the "callback" (postMessage) with task data, regardless of success or failure
+    try {
+      const clients = await self.clients.matchAll();
+      console.log("clients", clients);
+      clients.forEach((client) => {
+        console.log("send to each client", client);
+        client.postMessage({
+          type: "TASK_UPDATE",
+          task: task,
+        });
+      });
+    } catch (callbackError) {
+      console.error("Callback execution failed:", callbackError);
+    }
   }
 }
 
