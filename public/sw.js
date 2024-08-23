@@ -1,0 +1,156 @@
+/*
+ * ATTENTION: An "eval-source-map" devtool has been used.
+ * This devtool is neither made for production nor for readable output files.
+ * It uses "eval()" calls to create a separate source file with attached SourceMaps in the browser devtools.
+ * If you are trying to read the output file, select a different devtool (https://webpack.js.org/configuration/devtool/)
+ * or disable the default devtool with "devtool: false".
+ * If you are looking for production-ready output files, see mode: "production" (https://webpack.js.org/configuration/mode/).
+ */
+/******/ (function() { // webpackBootstrap
+/******/ 	"use strict";
+/******/ 	var __webpack_modules__ = ({
+
+/***/ "./service-worker/lib.ts":
+/*!*******************************!*\
+  !*** ./service-worker/lib.ts ***!
+  \*******************************/
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+eval(__webpack_require__.ts("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   monitorQueue: function() { return /* binding */ monitorQueue; }\n/* harmony export */ });\nconst DB_NAME = \"taskQueueDB\";\nconst STORE_NAME = \"tasks\";\nconst COMPLETED_STORE_NAME = \"completedTasks\";\nlet db = null;\n// Open IndexedDB\nfunction openDB() {\n    return new Promise((resolve, reject)=>{\n        const request = indexedDB.open(DB_NAME, 1);\n        request.onupgradeneeded = (event)=>{\n            const db = event.target.result;\n            db.createObjectStore(STORE_NAME, {\n                keyPath: \"id\",\n                autoIncrement: true\n            });\n            db.createObjectStore(COMPLETED_STORE_NAME, {\n                keyPath: \"id\",\n                autoIncrement: true\n            });\n        };\n        request.onsuccess = (event)=>{\n            db = event.target.result;\n            resolve(db);\n        };\n        request.onerror = (event)=>{\n            reject(\"IndexedDB error: \" + event.target.error);\n        };\n    });\n}\n// Add task to queue in IndexedDB\nasync function enqueueTask(task) {\n    const db = await openDB();\n    const transaction = db.transaction(STORE_NAME, \"readwrite\");\n    const store = transaction.objectStore(STORE_NAME);\n    console.log(\"adding task\", task);\n    const returnVal = store.add(task);\n    console.log(\"enqueued\", returnVal);\n}\n// Get and remove the next task from the queue\nasync function dequeueTask() {\n    const db = await openDB();\n    const transaction = db.transaction(STORE_NAME, \"readwrite\");\n    const store = transaction.objectStore(STORE_NAME);\n    const request = store.openCursor();\n    return new Promise((resolve, reject)=>{\n        request.onsuccess = (event)=>{\n            const cursor = event.target.result;\n            if (cursor) {\n                const task = cursor.value;\n                cursor.delete(); // Remove the task from the queue\n                resolve(task);\n            } else {\n                resolve(null); // No more tasks in the queue\n            }\n        };\n        request.onerror = (event)=>{\n            reject(\"IndexedDB error: \" + event.target.error);\n        };\n    });\n}\n// Update task status in IndexedDB\nasync function updateTaskInStorage(updatedTask) {\n    const db = await openDB();\n    const transaction = db.transaction(COMPLETED_STORE_NAME, \"readwrite\");\n    const store = transaction.objectStore(COMPLETED_STORE_NAME);\n    store.add(updatedTask);\n}\n// Function to perform the task\nasync function performTask(task) {\n    try {\n        console.log(\"performing fetch\", task.url);\n        const response = await fetch(task.url, {\n            method: task.method || \"GET\",\n            headers: task.headers || {},\n            body: task.body ? JSON.stringify(task.body) : null\n        });\n        const result = await response.json();\n        task.status = \"complete\";\n        task.result = result;\n        console.log(\"updated task\", task);\n        await updateTaskInStorage(task);\n    } catch (error) {\n        if (error instanceof Error) {\n            console.error(\"Task failed:\", error);\n            task.status = \"failed\";\n            task.error = error.message;\n            await updateTaskInStorage(task);\n            return;\n        }\n        console.error(\"unknown error\", error);\n    }\n}\n// Monitor the queue and perform tasks\nfunction monitorQueue() {\n    console.log(\"setting up monitoring queue\");\n    setInterval(async ()=>{\n        const task = await dequeueTask();\n        if (task) {\n            console.log(\"performing task\", task);\n            await performTask(task);\n        }\n    }, 1000); // Check every second\n}\n// Message event listener\nself.addEventListener(\"message\", (event)=>{\n    const data = event.data;\n    if (data && data.action === \"enqueue\") {\n        console.log(\"got one\", data.task);\n        // do we have an id?\n        enqueueTask(data.task);\n    }\n});\n\n\n;\n    // Wrapped in an IIFE to avoid polluting the global scope\n    ;\n    (function () {\n        var _a, _b;\n        // Legacy CSS implementations will `eval` browser code in a Node.js context\n        // to extract CSS. For backwards compatibility, we need to check we're in a\n        // browser context before continuing.\n        if (typeof self !== 'undefined' &&\n            // AMP / No-JS mode does not inject these helpers:\n            '$RefreshHelpers$' in self) {\n            // @ts-ignore __webpack_module__ is global\n            var currentExports = module.exports;\n            // @ts-ignore __webpack_module__ is global\n            var prevSignature = (_b = (_a = module.hot.data) === null || _a === void 0 ? void 0 : _a.prevSignature) !== null && _b !== void 0 ? _b : null;\n            // This cannot happen in MainTemplate because the exports mismatch between\n            // templating and execution.\n            self.$RefreshHelpers$.registerExportsForReactRefresh(currentExports, module.id);\n            // A module can be accepted automatically based on its exports, e.g. when\n            // it is a Refresh Boundary.\n            if (self.$RefreshHelpers$.isReactRefreshBoundary(currentExports)) {\n                // Save the previous exports signature on update so we can compare the boundary\n                // signatures. We avoid saving exports themselves since it causes memory leaks (https://github.com/vercel/next.js/pull/53797)\n                module.hot.dispose(function (data) {\n                    data.prevSignature =\n                        self.$RefreshHelpers$.getRefreshBoundarySignature(currentExports);\n                });\n                // Unconditionally accept an update to this module, we'll check if it's\n                // still a Refresh Boundary later.\n                // @ts-ignore importMeta is replaced in the loader\n                /* unsupported import.meta.webpackHot */ undefined.accept();\n                // This field is set when the previous version of this module was a\n                // Refresh Boundary, letting us know we need to check for invalidation or\n                // enqueue an update.\n                if (prevSignature !== null) {\n                    // A boundary can become ineligible if its exports are incompatible\n                    // with the previous exports.\n                    //\n                    // For example, if you add/remove/change exports, we'll want to\n                    // re-execute the importing modules, and force those components to\n                    // re-render. Similarly, if you convert a class component to a\n                    // function, we want to invalidate the boundary.\n                    if (self.$RefreshHelpers$.shouldInvalidateReactRefreshBoundary(prevSignature, self.$RefreshHelpers$.getRefreshBoundarySignature(currentExports))) {\n                        module.hot.invalidate();\n                    }\n                    else {\n                        self.$RefreshHelpers$.scheduleUpdate();\n                    }\n                }\n            }\n            else {\n                // Since we just executed the code for the module, it's possible that the\n                // new exports made it ineligible for being a boundary.\n                // We only care about the case when we were _previously_ a boundary,\n                // because we already accepted this update (accidental side effect).\n                var isNoLongerABoundary = prevSignature !== null;\n                if (isNoLongerABoundary) {\n                    module.hot.invalidate();\n                }\n            }\n        }\n    })();\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiLi9zZXJ2aWNlLXdvcmtlci9saWIudHMiLCJtYXBwaW5ncyI6Ijs7OztBQUVBLE1BQU1BLFVBQVU7QUFDaEIsTUFBTUMsYUFBYTtBQUNuQixNQUFNQyx1QkFBdUI7QUFDN0IsSUFBSUMsS0FBeUI7QUFFN0IsaUJBQWlCO0FBQ2pCLFNBQVNDO0lBQ1AsT0FBTyxJQUFJQyxRQUFxQixDQUFDQyxTQUFTQztRQUN4QyxNQUFNQyxVQUFVQyxVQUFVQyxJQUFJLENBQUNWLFNBQVM7UUFFeENRLFFBQVFHLGVBQWUsR0FBRyxDQUFDQztZQUN6QixNQUFNVCxLQUFLLE1BQU9VLE1BQU0sQ0FBc0JDLE1BQU07WUFDcERYLEdBQUdZLGlCQUFpQixDQUFDZCxZQUFZO2dCQUFFZSxTQUFTO2dCQUFNQyxlQUFlO1lBQUs7WUFDdEVkLEdBQUdZLGlCQUFpQixDQUFDYixzQkFBc0I7Z0JBQ3pDYyxTQUFTO2dCQUNUQyxlQUFlO1lBQ2pCO1FBQ0Y7UUFFQVQsUUFBUVUsU0FBUyxHQUFHLENBQUNOO1lBQ25CVCxLQUFLLE1BQU9VLE1BQU0sQ0FBc0JDLE1BQU07WUFDOUNSLFFBQVFIO1FBQ1Y7UUFFQUssUUFBUVcsT0FBTyxHQUFHLENBQUNQO1lBQ2pCTCxPQUFPLHNCQUFzQixNQUFPTSxNQUFNLENBQXNCTyxLQUFLO1FBQ3ZFO0lBQ0Y7QUFDRjtBQUVBLGlDQUFpQztBQUNqQyxlQUFlQyxZQUFZQyxJQUFVO0lBQ25DLE1BQU1uQixLQUFLLE1BQU1DO0lBQ2pCLE1BQU1tQixjQUFjcEIsR0FBR29CLFdBQVcsQ0FBQ3RCLFlBQVk7SUFDL0MsTUFBTXVCLFFBQVFELFlBQVlFLFdBQVcsQ0FBQ3hCO0lBQ3RDeUIsUUFBUUMsR0FBRyxDQUFDLGVBQWVMO0lBQzNCLE1BQU1NLFlBQVlKLE1BQU1LLEdBQUcsQ0FBQ1A7SUFDNUJJLFFBQVFDLEdBQUcsQ0FBQyxZQUFZQztBQUMxQjtBQUVBLDhDQUE4QztBQUM5QyxlQUFlRTtJQUNiLE1BQU0zQixLQUFLLE1BQU1DO0lBQ2pCLE1BQU1tQixjQUFjcEIsR0FBR29CLFdBQVcsQ0FBQ3RCLFlBQVk7SUFDL0MsTUFBTXVCLFFBQVFELFlBQVlFLFdBQVcsQ0FBQ3hCO0lBQ3RDLE1BQU1PLFVBQVVnQixNQUFNTyxVQUFVO0lBRWhDLE9BQU8sSUFBSTFCLFFBQWEsQ0FBQ0MsU0FBU0M7UUFDaENDLFFBQVFVLFNBQVMsR0FBRyxDQUFDTjtZQUNuQixNQUFNb0IsU0FBUyxNQUFPbkIsTUFBTSxDQUFvQ0MsTUFBTTtZQUN0RSxJQUFJa0IsUUFBUTtnQkFDVixNQUFNVixPQUFPVSxPQUFPQyxLQUFLO2dCQUN6QkQsT0FBT0UsTUFBTSxJQUFJLGlDQUFpQztnQkFDbEQ1QixRQUFRZ0I7WUFDVixPQUFPO2dCQUNMaEIsUUFBUSxPQUFPLDZCQUE2QjtZQUM5QztRQUNGO1FBRUFFLFFBQVFXLE9BQU8sR0FBRyxDQUFDUDtZQUNqQkwsT0FBTyxzQkFBc0IsTUFBT00sTUFBTSxDQUFnQk8sS0FBSztRQUNqRTtJQUNGO0FBQ0Y7QUFFQSxrQ0FBa0M7QUFDbEMsZUFBZWUsb0JBQW9CQyxXQUFpQjtJQUNsRCxNQUFNakMsS0FBSyxNQUFNQztJQUNqQixNQUFNbUIsY0FBY3BCLEdBQUdvQixXQUFXLENBQUNyQixzQkFBc0I7SUFDekQsTUFBTXNCLFFBQVFELFlBQVlFLFdBQVcsQ0FBQ3ZCO0lBQ3RDc0IsTUFBTUssR0FBRyxDQUFDTztBQUNaO0FBRUEsK0JBQStCO0FBQy9CLGVBQWVDLFlBQVlmLElBQVU7SUFDbkMsSUFBSTtRQUNGSSxRQUFRQyxHQUFHLENBQUMsb0JBQW9CTCxLQUFLZ0IsR0FBRztRQUN4QyxNQUFNQyxXQUFXLE1BQU1DLE1BQU1sQixLQUFLZ0IsR0FBRyxFQUFFO1lBQ3JDRyxRQUFRbkIsS0FBS21CLE1BQU0sSUFBSTtZQUN2QkMsU0FBU3BCLEtBQUtvQixPQUFPLElBQUksQ0FBQztZQUMxQkMsTUFBTXJCLEtBQUtxQixJQUFJLEdBQUdDLEtBQUtDLFNBQVMsQ0FBQ3ZCLEtBQUtxQixJQUFJLElBQUk7UUFDaEQ7UUFFQSxNQUFNN0IsU0FBUyxNQUFNeUIsU0FBU08sSUFBSTtRQUNsQ3hCLEtBQUt5QixNQUFNLEdBQUc7UUFDZHpCLEtBQUtSLE1BQU0sR0FBR0E7UUFDZFksUUFBUUMsR0FBRyxDQUFDLGdCQUFnQkw7UUFDNUIsTUFBTWEsb0JBQW9CYjtJQUM1QixFQUFFLE9BQU9GLE9BQU87UUFDZCxJQUFJQSxpQkFBaUI0QixPQUFPO1lBQzFCdEIsUUFBUU4sS0FBSyxDQUFDLGdCQUFnQkE7WUFDOUJFLEtBQUt5QixNQUFNLEdBQUc7WUFDZHpCLEtBQUtGLEtBQUssR0FBR0EsTUFBTTZCLE9BQU87WUFDMUIsTUFBTWQsb0JBQW9CYjtZQUMxQjtRQUNGO1FBQ0FJLFFBQVFOLEtBQUssQ0FBQyxpQkFBaUJBO0lBQ2pDO0FBQ0Y7QUFFQSxzQ0FBc0M7QUFDL0IsU0FBUzhCO0lBQ2R4QixRQUFRQyxHQUFHLENBQUM7SUFDWndCLFlBQVk7UUFDVixNQUFNN0IsT0FBTyxNQUFNUTtRQUNuQixJQUFJUixNQUFNO1lBQ1JJLFFBQVFDLEdBQUcsQ0FBQyxtQkFBbUJMO1lBQy9CLE1BQU1lLFlBQVlmO1FBQ3BCO0lBQ0YsR0FBRyxPQUFPLHFCQUFxQjtBQUNqQztBQUVBLHlCQUF5QjtBQUN6QjhCLEtBQUtDLGdCQUFnQixDQUFDLFdBQVcsQ0FBQ3pDO0lBQ2hDLE1BQU0wQyxPQUFPMUMsTUFBTTBDLElBQUk7SUFFdkIsSUFBSUEsUUFBUUEsS0FBS0MsTUFBTSxLQUFLLFdBQVc7UUFDckM3QixRQUFRQyxHQUFHLENBQUMsV0FBVzJCLEtBQUtoQyxJQUFJO1FBQ2hDLG9CQUFvQjtRQUVwQkQsWUFBWWlDLEtBQUtoQyxJQUFJO0lBQ3ZCO0FBQ0YiLCJzb3VyY2VzIjpbIndlYnBhY2s6Ly9fTl9FLy4vc2VydmljZS13b3JrZXIvbGliLnRzP2E0MTIiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgRXh0ZW5kYWJsZU1lc3NhZ2VFdmVudCwgVGFzayB9IGZyb20gXCIuL3R5cGVzXCI7XG5cbmNvbnN0IERCX05BTUUgPSBcInRhc2tRdWV1ZURCXCI7XG5jb25zdCBTVE9SRV9OQU1FID0gXCJ0YXNrc1wiO1xuY29uc3QgQ09NUExFVEVEX1NUT1JFX05BTUUgPSBcImNvbXBsZXRlZFRhc2tzXCI7XG5sZXQgZGI6IElEQkRhdGFiYXNlIHwgbnVsbCA9IG51bGw7XG5cbi8vIE9wZW4gSW5kZXhlZERCXG5mdW5jdGlvbiBvcGVuREIoKSB7XG4gIHJldHVybiBuZXcgUHJvbWlzZTxJREJEYXRhYmFzZT4oKHJlc29sdmUsIHJlamVjdCkgPT4ge1xuICAgIGNvbnN0IHJlcXVlc3QgPSBpbmRleGVkREIub3BlbihEQl9OQU1FLCAxKTtcblxuICAgIHJlcXVlc3Qub251cGdyYWRlbmVlZGVkID0gKGV2ZW50OiBJREJWZXJzaW9uQ2hhbmdlRXZlbnQpID0+IHtcbiAgICAgIGNvbnN0IGRiID0gKGV2ZW50LnRhcmdldCBhcyBJREJPcGVuREJSZXF1ZXN0KS5yZXN1bHQ7XG4gICAgICBkYi5jcmVhdGVPYmplY3RTdG9yZShTVE9SRV9OQU1FLCB7IGtleVBhdGg6IFwiaWRcIiwgYXV0b0luY3JlbWVudDogdHJ1ZSB9KTtcbiAgICAgIGRiLmNyZWF0ZU9iamVjdFN0b3JlKENPTVBMRVRFRF9TVE9SRV9OQU1FLCB7XG4gICAgICAgIGtleVBhdGg6IFwiaWRcIixcbiAgICAgICAgYXV0b0luY3JlbWVudDogdHJ1ZSxcbiAgICAgIH0pO1xuICAgIH07XG5cbiAgICByZXF1ZXN0Lm9uc3VjY2VzcyA9IChldmVudDogRXZlbnQpID0+IHtcbiAgICAgIGRiID0gKGV2ZW50LnRhcmdldCBhcyBJREJPcGVuREJSZXF1ZXN0KS5yZXN1bHQ7XG4gICAgICByZXNvbHZlKGRiKTtcbiAgICB9O1xuXG4gICAgcmVxdWVzdC5vbmVycm9yID0gKGV2ZW50OiBFdmVudCkgPT4ge1xuICAgICAgcmVqZWN0KFwiSW5kZXhlZERCIGVycm9yOiBcIiArIChldmVudC50YXJnZXQgYXMgSURCT3BlbkRCUmVxdWVzdCkuZXJyb3IpO1xuICAgIH07XG4gIH0pO1xufVxuXG4vLyBBZGQgdGFzayB0byBxdWV1ZSBpbiBJbmRleGVkREJcbmFzeW5jIGZ1bmN0aW9uIGVucXVldWVUYXNrKHRhc2s6IFRhc2spIHtcbiAgY29uc3QgZGIgPSBhd2FpdCBvcGVuREIoKTtcbiAgY29uc3QgdHJhbnNhY3Rpb24gPSBkYi50cmFuc2FjdGlvbihTVE9SRV9OQU1FLCBcInJlYWR3cml0ZVwiKTtcbiAgY29uc3Qgc3RvcmUgPSB0cmFuc2FjdGlvbi5vYmplY3RTdG9yZShTVE9SRV9OQU1FKTtcbiAgY29uc29sZS5sb2coXCJhZGRpbmcgdGFza1wiLCB0YXNrKTtcbiAgY29uc3QgcmV0dXJuVmFsID0gc3RvcmUuYWRkKHRhc2spO1xuICBjb25zb2xlLmxvZyhcImVucXVldWVkXCIsIHJldHVyblZhbCk7XG59XG5cbi8vIEdldCBhbmQgcmVtb3ZlIHRoZSBuZXh0IHRhc2sgZnJvbSB0aGUgcXVldWVcbmFzeW5jIGZ1bmN0aW9uIGRlcXVldWVUYXNrKCkge1xuICBjb25zdCBkYiA9IGF3YWl0IG9wZW5EQigpO1xuICBjb25zdCB0cmFuc2FjdGlvbiA9IGRiLnRyYW5zYWN0aW9uKFNUT1JFX05BTUUsIFwicmVhZHdyaXRlXCIpO1xuICBjb25zdCBzdG9yZSA9IHRyYW5zYWN0aW9uLm9iamVjdFN0b3JlKFNUT1JFX05BTUUpO1xuICBjb25zdCByZXF1ZXN0ID0gc3RvcmUub3BlbkN1cnNvcigpO1xuXG4gIHJldHVybiBuZXcgUHJvbWlzZTxhbnk+KChyZXNvbHZlLCByZWplY3QpID0+IHtcbiAgICByZXF1ZXN0Lm9uc3VjY2VzcyA9IChldmVudDogRXZlbnQpID0+IHtcbiAgICAgIGNvbnN0IGN1cnNvciA9IChldmVudC50YXJnZXQgYXMgSURCUmVxdWVzdDxJREJDdXJzb3JXaXRoVmFsdWU+KS5yZXN1bHQ7XG4gICAgICBpZiAoY3Vyc29yKSB7XG4gICAgICAgIGNvbnN0IHRhc2sgPSBjdXJzb3IudmFsdWU7XG4gICAgICAgIGN1cnNvci5kZWxldGUoKTsgLy8gUmVtb3ZlIHRoZSB0YXNrIGZyb20gdGhlIHF1ZXVlXG4gICAgICAgIHJlc29sdmUodGFzayk7XG4gICAgICB9IGVsc2Uge1xuICAgICAgICByZXNvbHZlKG51bGwpOyAvLyBObyBtb3JlIHRhc2tzIGluIHRoZSBxdWV1ZVxuICAgICAgfVxuICAgIH07XG5cbiAgICByZXF1ZXN0Lm9uZXJyb3IgPSAoZXZlbnQ6IEV2ZW50KSA9PiB7XG4gICAgICByZWplY3QoXCJJbmRleGVkREIgZXJyb3I6IFwiICsgKGV2ZW50LnRhcmdldCBhcyBJREJSZXF1ZXN0KS5lcnJvcik7XG4gICAgfTtcbiAgfSk7XG59XG5cbi8vIFVwZGF0ZSB0YXNrIHN0YXR1cyBpbiBJbmRleGVkREJcbmFzeW5jIGZ1bmN0aW9uIHVwZGF0ZVRhc2tJblN0b3JhZ2UodXBkYXRlZFRhc2s6IFRhc2spIHtcbiAgY29uc3QgZGIgPSBhd2FpdCBvcGVuREIoKTtcbiAgY29uc3QgdHJhbnNhY3Rpb24gPSBkYi50cmFuc2FjdGlvbihDT01QTEVURURfU1RPUkVfTkFNRSwgXCJyZWFkd3JpdGVcIik7XG4gIGNvbnN0IHN0b3JlID0gdHJhbnNhY3Rpb24ub2JqZWN0U3RvcmUoQ09NUExFVEVEX1NUT1JFX05BTUUpO1xuICBzdG9yZS5hZGQodXBkYXRlZFRhc2spO1xufVxuXG4vLyBGdW5jdGlvbiB0byBwZXJmb3JtIHRoZSB0YXNrXG5hc3luYyBmdW5jdGlvbiBwZXJmb3JtVGFzayh0YXNrOiBUYXNrKSB7XG4gIHRyeSB7XG4gICAgY29uc29sZS5sb2coXCJwZXJmb3JtaW5nIGZldGNoXCIsIHRhc2sudXJsKTtcbiAgICBjb25zdCByZXNwb25zZSA9IGF3YWl0IGZldGNoKHRhc2sudXJsLCB7XG4gICAgICBtZXRob2Q6IHRhc2subWV0aG9kIHx8IFwiR0VUXCIsXG4gICAgICBoZWFkZXJzOiB0YXNrLmhlYWRlcnMgfHwge30sXG4gICAgICBib2R5OiB0YXNrLmJvZHkgPyBKU09OLnN0cmluZ2lmeSh0YXNrLmJvZHkpIDogbnVsbCxcbiAgICB9KTtcblxuICAgIGNvbnN0IHJlc3VsdCA9IGF3YWl0IHJlc3BvbnNlLmpzb24oKTtcbiAgICB0YXNrLnN0YXR1cyA9IFwiY29tcGxldGVcIjtcbiAgICB0YXNrLnJlc3VsdCA9IHJlc3VsdDtcbiAgICBjb25zb2xlLmxvZyhcInVwZGF0ZWQgdGFza1wiLCB0YXNrKTtcbiAgICBhd2FpdCB1cGRhdGVUYXNrSW5TdG9yYWdlKHRhc2spO1xuICB9IGNhdGNoIChlcnJvcikge1xuICAgIGlmIChlcnJvciBpbnN0YW5jZW9mIEVycm9yKSB7XG4gICAgICBjb25zb2xlLmVycm9yKFwiVGFzayBmYWlsZWQ6XCIsIGVycm9yKTtcbiAgICAgIHRhc2suc3RhdHVzID0gXCJmYWlsZWRcIjtcbiAgICAgIHRhc2suZXJyb3IgPSBlcnJvci5tZXNzYWdlO1xuICAgICAgYXdhaXQgdXBkYXRlVGFza0luU3RvcmFnZSh0YXNrKTtcbiAgICAgIHJldHVybjtcbiAgICB9XG4gICAgY29uc29sZS5lcnJvcihcInVua25vd24gZXJyb3JcIiwgZXJyb3IpO1xuICB9XG59XG5cbi8vIE1vbml0b3IgdGhlIHF1ZXVlIGFuZCBwZXJmb3JtIHRhc2tzXG5leHBvcnQgZnVuY3Rpb24gbW9uaXRvclF1ZXVlKCkge1xuICBjb25zb2xlLmxvZyhcInNldHRpbmcgdXAgbW9uaXRvcmluZyBxdWV1ZVwiKTtcbiAgc2V0SW50ZXJ2YWwoYXN5bmMgKCkgPT4ge1xuICAgIGNvbnN0IHRhc2sgPSBhd2FpdCBkZXF1ZXVlVGFzaygpO1xuICAgIGlmICh0YXNrKSB7XG4gICAgICBjb25zb2xlLmxvZyhcInBlcmZvcm1pbmcgdGFza1wiLCB0YXNrKTtcbiAgICAgIGF3YWl0IHBlcmZvcm1UYXNrKHRhc2spO1xuICAgIH1cbiAgfSwgMTAwMCk7IC8vIENoZWNrIGV2ZXJ5IHNlY29uZFxufVxuXG4vLyBNZXNzYWdlIGV2ZW50IGxpc3RlbmVyXG5zZWxmLmFkZEV2ZW50TGlzdGVuZXIoXCJtZXNzYWdlXCIsIChldmVudDogRXh0ZW5kYWJsZU1lc3NhZ2VFdmVudCkgPT4ge1xuICBjb25zdCBkYXRhID0gZXZlbnQuZGF0YTtcblxuICBpZiAoZGF0YSAmJiBkYXRhLmFjdGlvbiA9PT0gXCJlbnF1ZXVlXCIpIHtcbiAgICBjb25zb2xlLmxvZyhcImdvdCBvbmVcIiwgZGF0YS50YXNrKTtcbiAgICAvLyBkbyB3ZSBoYXZlIGFuIGlkP1xuXG4gICAgZW5xdWV1ZVRhc2soZGF0YS50YXNrKTtcbiAgfVxufSk7XG4iXSwibmFtZXMiOlsiREJfTkFNRSIsIlNUT1JFX05BTUUiLCJDT01QTEVURURfU1RPUkVfTkFNRSIsImRiIiwib3BlbkRCIiwiUHJvbWlzZSIsInJlc29sdmUiLCJyZWplY3QiLCJyZXF1ZXN0IiwiaW5kZXhlZERCIiwib3BlbiIsIm9udXBncmFkZW5lZWRlZCIsImV2ZW50IiwidGFyZ2V0IiwicmVzdWx0IiwiY3JlYXRlT2JqZWN0U3RvcmUiLCJrZXlQYXRoIiwiYXV0b0luY3JlbWVudCIsIm9uc3VjY2VzcyIsIm9uZXJyb3IiLCJlcnJvciIsImVucXVldWVUYXNrIiwidGFzayIsInRyYW5zYWN0aW9uIiwic3RvcmUiLCJvYmplY3RTdG9yZSIsImNvbnNvbGUiLCJsb2ciLCJyZXR1cm5WYWwiLCJhZGQiLCJkZXF1ZXVlVGFzayIsIm9wZW5DdXJzb3IiLCJjdXJzb3IiLCJ2YWx1ZSIsImRlbGV0ZSIsInVwZGF0ZVRhc2tJblN0b3JhZ2UiLCJ1cGRhdGVkVGFzayIsInBlcmZvcm1UYXNrIiwidXJsIiwicmVzcG9uc2UiLCJmZXRjaCIsIm1ldGhvZCIsImhlYWRlcnMiLCJib2R5IiwiSlNPTiIsInN0cmluZ2lmeSIsImpzb24iLCJzdGF0dXMiLCJFcnJvciIsIm1lc3NhZ2UiLCJtb25pdG9yUXVldWUiLCJzZXRJbnRlcnZhbCIsInNlbGYiLCJhZGRFdmVudExpc3RlbmVyIiwiZGF0YSIsImFjdGlvbiJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///./service-worker/lib.ts\n"));
+
+/***/ }),
+
+/***/ "./service-worker/service-worker.ts":
+/*!******************************************!*\
+  !*** ./service-worker/service-worker.ts ***!
+  \******************************************/
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+eval(__webpack_require__.ts("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _lib__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./lib */ \"./service-worker/lib.ts\");\n\n// Add these lines\nself.addEventListener(\"install\", (event)=>{\n    self.skipWaiting();\n});\nself.addEventListener(\"activate\", (event)=>{\n    event.waitUntil(clients.claim());\n});\n// precacheAndRoute([{'revision':'2b519e5e2f51c3ef1c2f23b310ac1fc1','url':'/_next/app-build-manifest.json'},{'revision':'3605966e8c7c09aefed9bdf6438276f3','url':'/_next/server/app/page_client-reference-manifest.js'},{'revision':'9b8da685af90831dd78ddc8d2fc836a0','url':'/_next/server/middleware-build-manifest.js'},{'revision':'537157e425123611736ddcf544160221','url':'/_next/server/middleware-react-loadable-manifest.js'},{'revision':'3cdb7034ca9a894d974af45d5c42d175','url':'/_next/server/next-font-manifest.js'},{'revision':'bbdcfbb71c2ec893abdae239b23979e2','url':'/_next/server/next-font-manifest.json'},{'revision':null,'url':'/_next/static/chunks/app-pages-internals.js'},{'revision':null,'url':'/_next/static/chunks/app/layout.js'},{'revision':null,'url':'/_next/static/chunks/app/page.js'},{'revision':null,'url':'/_next/static/chunks/polyfills.js'},{'revision':null,'url':'/_next/static/chunks/webpack.js'},{'revision':null,'url':'/_next/static/css/app/layout.css'},{'revision':null,'url':'/_next/static/development/_buildManifest.js'},{'revision':null,'url':'/_next/static/development/_ssgManifest.js'},{'revision':null,'url':'/_next/static/media/26a46d62cd723877-s.woff2'},{'revision':null,'url':'/_next/static/media/55c55f0601d81cf3-s.woff2'},{'revision':null,'url':'/_next/static/media/581909926a08bbc8-s.woff2'},{'revision':null,'url':'/_next/static/media/6d93bde91c0c2823-s.woff2'},{'revision':null,'url':'/_next/static/media/97e0cb1ae144a2a9-s.woff2'},{'revision':null,'url':'/_next/static/media/a34f9d1faa5f3315-s.p.woff2'},{'revision':null,'url':'/_next/static/media/df0a9ae256c0569c-s.woff2'},{'revision':null,'url':'/_next/static/webpack/4f8e778007e97170.webpack.hot-update.json'},{'revision':null,'url':'/_next/static/webpack/webpack.4f8e778007e97170.hot-update.js'},{'revision':'d938eca3d89e313300b3c41fbff932f8','url':'/next.svg'},{'revision':'0222c3eef0be0734c8cd707b37c55d7e','url':'/vercel.svg'}]);\n// IndexedDB setup\n// Start monitoring the queue\n(0,_lib__WEBPACK_IMPORTED_MODULE_0__.monitorQueue)();\n\n\n;\n    // Wrapped in an IIFE to avoid polluting the global scope\n    ;\n    (function () {\n        var _a, _b;\n        // Legacy CSS implementations will `eval` browser code in a Node.js context\n        // to extract CSS. For backwards compatibility, we need to check we're in a\n        // browser context before continuing.\n        if (typeof self !== 'undefined' &&\n            // AMP / No-JS mode does not inject these helpers:\n            '$RefreshHelpers$' in self) {\n            // @ts-ignore __webpack_module__ is global\n            var currentExports = module.exports;\n            // @ts-ignore __webpack_module__ is global\n            var prevSignature = (_b = (_a = module.hot.data) === null || _a === void 0 ? void 0 : _a.prevSignature) !== null && _b !== void 0 ? _b : null;\n            // This cannot happen in MainTemplate because the exports mismatch between\n            // templating and execution.\n            self.$RefreshHelpers$.registerExportsForReactRefresh(currentExports, module.id);\n            // A module can be accepted automatically based on its exports, e.g. when\n            // it is a Refresh Boundary.\n            if (self.$RefreshHelpers$.isReactRefreshBoundary(currentExports)) {\n                // Save the previous exports signature on update so we can compare the boundary\n                // signatures. We avoid saving exports themselves since it causes memory leaks (https://github.com/vercel/next.js/pull/53797)\n                module.hot.dispose(function (data) {\n                    data.prevSignature =\n                        self.$RefreshHelpers$.getRefreshBoundarySignature(currentExports);\n                });\n                // Unconditionally accept an update to this module, we'll check if it's\n                // still a Refresh Boundary later.\n                // @ts-ignore importMeta is replaced in the loader\n                /* unsupported import.meta.webpackHot */ undefined.accept();\n                // This field is set when the previous version of this module was a\n                // Refresh Boundary, letting us know we need to check for invalidation or\n                // enqueue an update.\n                if (prevSignature !== null) {\n                    // A boundary can become ineligible if its exports are incompatible\n                    // with the previous exports.\n                    //\n                    // For example, if you add/remove/change exports, we'll want to\n                    // re-execute the importing modules, and force those components to\n                    // re-render. Similarly, if you convert a class component to a\n                    // function, we want to invalidate the boundary.\n                    if (self.$RefreshHelpers$.shouldInvalidateReactRefreshBoundary(prevSignature, self.$RefreshHelpers$.getRefreshBoundarySignature(currentExports))) {\n                        module.hot.invalidate();\n                    }\n                    else {\n                        self.$RefreshHelpers$.scheduleUpdate();\n                    }\n                }\n            }\n            else {\n                // Since we just executed the code for the module, it's possible that the\n                // new exports made it ineligible for being a boundary.\n                // We only care about the case when we were _previously_ a boundary,\n                // because we already accepted this update (accidental side effect).\n                var isNoLongerABoundary = prevSignature !== null;\n                if (isNoLongerABoundary) {\n                    module.hot.invalidate();\n                }\n            }\n        }\n    })();\n//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiLi9zZXJ2aWNlLXdvcmtlci9zZXJ2aWNlLXdvcmtlci50cyIsIm1hcHBpbmdzIjoiOztBQUdxQztBQVVyQyxrQkFBa0I7QUFDbEJDLEtBQUtDLGdCQUFnQixDQUFDLFdBQVcsQ0FBQ0M7SUFDaENGLEtBQUtHLFdBQVc7QUFDbEI7QUFFQUgsS0FBS0MsZ0JBQWdCLENBQUMsWUFBWSxDQUFDQztJQUNqQ0EsTUFBTUUsU0FBUyxDQUFDQyxRQUFRQyxLQUFLO0FBQy9CO0FBRUEsd0NBQXdDO0FBQ3hDLGtCQUFrQjtBQUVsQiw2QkFBNkI7QUFDN0JQLGtEQUFZQSIsInNvdXJjZXMiOlsid2VicGFjazovL19OX0UvLi9zZXJ2aWNlLXdvcmtlci9zZXJ2aWNlLXdvcmtlci50cz81NTYzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IHByZWNhY2hlQW5kUm91dGUgfSBmcm9tIFwid29ya2JveC1wcmVjYWNoaW5nL3ByZWNhY2hlQW5kUm91dGVcIjtcbmltcG9ydCB7IEV4dGVuZGFibGVNZXNzYWdlRXZlbnQsIFRhc2sgfSBmcm9tIFwiLi90eXBlc1wiO1xuaW1wb3J0IHsgcmFuZG9tVVVJRCB9IGZyb20gXCJjcnlwdG9cIjtcbmltcG9ydCB7IG1vbml0b3JRdWV1ZSB9IGZyb20gXCIuL2xpYlwiO1xuXG4vLyBwdWJsaWMvc2VydmljZS13b3JrZXIudHNcblxuZGVjbGFyZSBnbG9iYWwge1xuICBpbnRlcmZhY2UgV2luZG93IHtcbiAgICBfX1dCX01BTklGRVNUOiBzdHJpbmdbXTtcbiAgfVxufVxuXG4vLyBBZGQgdGhlc2UgbGluZXNcbnNlbGYuYWRkRXZlbnRMaXN0ZW5lcignaW5zdGFsbCcsIChldmVudCkgPT4ge1xuICBzZWxmLnNraXBXYWl0aW5nKCk7XG59KTtcblxuc2VsZi5hZGRFdmVudExpc3RlbmVyKCdhY3RpdmF0ZScsIChldmVudCkgPT4ge1xuICBldmVudC53YWl0VW50aWwoY2xpZW50cy5jbGFpbSgpKTtcbn0pO1xuXG4vLyBwcmVjYWNoZUFuZFJvdXRlKHNlbGYuX19XQl9NQU5JRkVTVCk7XG4vLyBJbmRleGVkREIgc2V0dXBcblxuLy8gU3RhcnQgbW9uaXRvcmluZyB0aGUgcXVldWVcbm1vbml0b3JRdWV1ZSgpO1xuIl0sIm5hbWVzIjpbIm1vbml0b3JRdWV1ZSIsInNlbGYiLCJhZGRFdmVudExpc3RlbmVyIiwiZXZlbnQiLCJza2lwV2FpdGluZyIsIndhaXRVbnRpbCIsImNsaWVudHMiLCJjbGFpbSJdLCJzb3VyY2VSb290IjoiIn0=\n//# sourceURL=webpack-internal:///./service-worker/service-worker.ts\n"));
+
+/***/ })
+
+/******/ 	});
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			if (cachedModule.error !== undefined) throw cachedModule.error;
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			id: moduleId,
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		var threw = true;
+/******/ 		try {
+/******/ 			__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 			threw = false;
+/******/ 		} finally {
+/******/ 			if(threw) delete __webpack_module_cache__[moduleId];
+/******/ 		}
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/************************************************************************/
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	!function() {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__webpack_require__.d = function(exports, definition) {
+/******/ 			for(var key in definition) {
+/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	}();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	!function() {
+/******/ 		__webpack_require__.o = function(obj, prop) { return Object.prototype.hasOwnProperty.call(obj, prop); }
+/******/ 	}();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	!function() {
+/******/ 		// define __esModule on exports
+/******/ 		__webpack_require__.r = function(exports) {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	}();
+/******/ 	
+/******/ 	/* webpack/runtime/trusted types policy */
+/******/ 	!function() {
+/******/ 		var policy;
+/******/ 		__webpack_require__.tt = function() {
+/******/ 			// Create Trusted Type policy if Trusted Types are available and the policy doesn't exist yet.
+/******/ 			if (policy === undefined) {
+/******/ 				policy = {
+/******/ 					createScript: function(script) { return script; }
+/******/ 				};
+/******/ 				if (typeof trustedTypes !== "undefined" && trustedTypes.createPolicy) {
+/******/ 					policy = trustedTypes.createPolicy("nextjs#bundler", policy);
+/******/ 				}
+/******/ 			}
+/******/ 			return policy;
+/******/ 		};
+/******/ 	}();
+/******/ 	
+/******/ 	/* webpack/runtime/trusted types script */
+/******/ 	!function() {
+/******/ 		__webpack_require__.ts = function(script) { return __webpack_require__.tt().createScript(script); };
+/******/ 	}();
+/******/ 	
+/******/ 	/* webpack/runtime/react refresh */
+/******/ 	!function() {
+/******/ 		if (__webpack_require__.i) {
+/******/ 		__webpack_require__.i.push(function(options) {
+/******/ 			var originalFactory = options.factory;
+/******/ 			options.factory = function(moduleObject, moduleExports, webpackRequire) {
+/******/ 				var hasRefresh = typeof self !== "undefined" && !!self.$RefreshInterceptModuleExecution$;
+/******/ 				var cleanup = hasRefresh ? self.$RefreshInterceptModuleExecution$(moduleObject.id) : function() {};
+/******/ 				try {
+/******/ 					originalFactory.call(this, moduleObject, moduleExports, webpackRequire);
+/******/ 				} finally {
+/******/ 					cleanup();
+/******/ 				}
+/******/ 			}
+/******/ 		})
+/******/ 		}
+/******/ 	}();
+/******/ 	
+/******/ 	/* webpack/runtime/compat */
+/******/ 	
+/******/ 	
+/******/ 	// noop fns to prevent runtime errors during initialization
+/******/ 	if (typeof self !== "undefined") {
+/******/ 		self.$RefreshReg$ = function () {};
+/******/ 		self.$RefreshSig$ = function () {
+/******/ 			return function (type) {
+/******/ 				return type;
+/******/ 			};
+/******/ 		};
+/******/ 	}
+/******/ 	
+/************************************************************************/
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module can't be inlined because the eval-source-map devtool is used.
+/******/ 	var __webpack_exports__ = __webpack_require__("./service-worker/service-worker.ts");
+/******/ 	
+/******/ })()
+;
