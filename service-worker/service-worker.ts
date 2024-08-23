@@ -21,7 +21,10 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-precacheAndRoute(self.__WB_MANIFEST);
+const precache = [];
+precache.push(...self.__WB_MANIFEST);
+console.log("precache", precache);
+precacheAndRoute([]);
 // IndexedDB setup
 
 // Start monitoring the queue

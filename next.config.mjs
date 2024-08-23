@@ -8,6 +8,7 @@ const nextConfig = withWorkbox({
     // clientsClaim: true,
     // skipWaiting: true,
     force: true,
+    exclude: [/^_next/],
   },
   webpack(config, options) {
     // Custom Webpack config (if any)
