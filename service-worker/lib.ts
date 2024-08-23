@@ -1,9 +1,15 @@
-import { ExtendableMessageEvent, Task } from "./types";
+import { ExtendableMessageEvent, Task, TaskConfig } from "./types";
 
 const DB_NAME = "taskQueueDB";
 const STORE_NAME = "tasks";
 const COMPLETED_STORE_NAME = "completedTasks";
 let db: IDBDatabase | null = null;
+
+let swInstanceId: string;
+
+function generateInstanceId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
 
 // Open IndexedDB
 function openDB() {
@@ -31,36 +37,42 @@ function openDB() {
 }
 
 // Add task to queue in IndexedDB
-async function enqueueTask(task: Task) {
+async function enqueueTask(task: TaskConfig) {
   const db = await openDB();
   const transaction = db.transaction(STORE_NAME, "readwrite");
   const store = transaction.objectStore(STORE_NAME);
+  const now = new Date().toISOString();
   const taskWithDates = {
     ...task,
-    createdAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
     executedAt: null,
+    status: "pending",
   };
   console.log("adding task", taskWithDates);
   const returnVal = store.add(taskWithDates);
   console.log("enqueued", returnVal);
 }
 
-// Get and remove the next task from the queue
-async function dequeueTask() {
+// Get the next task from the queue without removing it
+async function getNextTask() {
   const db = await openDB();
-  const transaction = db.transaction(STORE_NAME, "readwrite");
+  const transaction = db.transaction(STORE_NAME, "readonly");
   const store = transaction.objectStore(STORE_NAME);
   const request = store.openCursor();
 
-  return new Promise<any>((resolve, reject) => {
+  return new Promise<Task | null>((resolve, reject) => {
     request.onsuccess = (event: Event) => {
       const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
       if (cursor) {
-        const task = cursor.value;
-        cursor.delete(); // Remove the task from the queue
-        resolve(task);
+        const task = cursor.value as Task;
+        if (task.status === "pending" || task.instanceId !== swInstanceId) {
+          resolve(task);
+        } else {
+          cursor.continue();
+        }
       } else {
-        resolve(null); // No more tasks in the queue
+        resolve(null); // No more tasks in the queue or no matching tasks found
       }
     };
 
@@ -70,19 +82,57 @@ async function dequeueTask() {
   });
 }
 
-// Update task status in IndexedDB
+// Update task in IndexedDB
 async function updateTaskInStorage(updatedTask: Task) {
   const db = await openDB();
-  const transaction = db.transaction(COMPLETED_STORE_NAME, "readwrite");
-  const store = transaction.objectStore(COMPLETED_STORE_NAME);
-  store.add(updatedTask);
+  const transaction = db.transaction(STORE_NAME, "readwrite");
+  const store = transaction.objectStore(STORE_NAME);
+  updatedTask.updatedAt = new Date().toISOString();
+  await store.put(updatedTask);
+}
+
+// Remove task from queue and add to completed tasks
+async function moveTaskToCompleted(task: Task) {
+  const db = await openDB();
+  const transaction = db.transaction(
+    [STORE_NAME, COMPLETED_STORE_NAME],
+    "readwrite"
+  );
+  const taskStore = transaction.objectStore(STORE_NAME);
+  const completedStore = transaction.objectStore(COMPLETED_STORE_NAME);
+
+  await taskStore.delete(task.id);
+  await completedStore.add(task);
+}
+
+// Send task update to all clients
+async function sendTaskUpdate(task: Task) {
+  try {
+    const clients = await (
+      self as unknown as ServiceWorkerGlobalScope
+    ).clients.matchAll();
+    clients.forEach((client) => {
+      console.log("send to each client", client);
+      client.postMessage({
+        type: "TASK_UPDATE",
+        task: task,
+      });
+    });
+  } catch (callbackError) {
+    console.error("Task update failed:", callbackError);
+  }
 }
 
 // Function to perform the task
 async function performTask(task: Task) {
   try {
     console.log("performing fetch", task.url);
+    task.status = "executing";
     task.executedAt = new Date().toISOString();
+    task.instanceId = swInstanceId;
+    await updateTaskInStorage(task);
+    await sendTaskUpdate(task);
+
     const response = await fetch(task.url, {
       method: task.method || "GET",
       headers: task.headers || {},
@@ -97,32 +147,17 @@ async function performTask(task: Task) {
     task.status = "complete";
     task.result = result;
     console.log("updated task", task);
-    await updateTaskInStorage(task);
+    await moveTaskToCompleted(task);
+    await sendTaskUpdate(task);
   } catch (error) {
     if (error instanceof Error) {
       console.error("Task failed:", error);
       task.status = "failed";
       task.error = error.message;
-      await updateTaskInStorage(task);
+      await moveTaskToCompleted(task);
+      await sendTaskUpdate(task);
     } else {
       console.error("unknown error", error);
-    }
-  } finally {
-    // Call the "callback" (postMessage) with task data, regardless of success or failure
-    try {
-      const clients = await (
-        self as unknown as ServiceWorkerGlobalScope
-      ).clients.matchAll();
-      console.log("clients", clients);
-      clients.forEach((client) => {
-        console.log("send to each client", client);
-        client.postMessage({
-          type: "TASK_UPDATE",
-          task: task,
-        });
-      });
-    } catch (callbackError) {
-      console.error("Callback execution failed:", callbackError);
     }
   }
 }
@@ -131,7 +166,7 @@ async function performTask(task: Task) {
 export function monitorQueue() {
   console.log("setting up monitoring queue");
   setInterval(async () => {
-    const task = await dequeueTask();
+    const task = await getNextTask();
     if (task) {
       console.log("performing task", task);
       await performTask(task);
@@ -139,14 +174,18 @@ export function monitorQueue() {
   }, 1000); // Check every second
 }
 
+// Initialize the instance ID when the service worker starts
+self.addEventListener("install", (event) => {
+  swInstanceId = generateInstanceId();
+  console.log("Service Worker instance ID:", swInstanceId);
+});
+
 // Message event listener
 self.addEventListener("message", (event: ExtendableMessageEvent) => {
   const data = event.data;
 
   if (data && data.action === "enqueue") {
     console.log("got one", data.task);
-    // do we have an id?
-
     enqueueTask(data.task);
   }
 });

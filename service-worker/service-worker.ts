@@ -23,8 +23,9 @@ self.addEventListener("activate", (event) => {
 
 const precache = [];
 precache.push(...self.__WB_MANIFEST);
-console.log("precache", precache);
-precacheAndRoute([]);
+console.log("precache", process.env.NODE_ENV !== "development" ? precache : []);
+// precacheAndRoute([]);
+precacheAndRoute(process.env.NODE_ENV !== "development" ? precache : []);
 // IndexedDB setup
 
 // Start monitoring the queue
