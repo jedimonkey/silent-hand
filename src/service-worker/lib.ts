@@ -97,20 +97,22 @@ async function sendTaskUpdate(task: Task) {
 // Function to perform the task
 async function performTask(task: Task) {
   try {
-    console.log("performing fetch", task.url);
+    console.log(`Performing task of type: ${task.type}`);
     task.status = "executing";
     task.executedAt = new Date();
     task.instanceId = swInstanceId;
     await updateTaskInStorage(task);
     await sendTaskUpdate(task);
 
-    const response = await fetch(task.url, {
-      method: task.method || "GET",
-      headers: task.headers || {},
-      body: task.body ? JSON.stringify(task.body) : null,
-    });
-
-    const result = await response.json();
+    let result;
+    switch (task.type) {
+      case "fetch":
+        result = await performFetchTask(task);
+        break;
+      // Add other task types here
+      default:
+        throw new Error(`Unknown task type: ${task.type}`);
+    }
 
     // Add a 10-second delay
     await new Promise((resolve) =>
@@ -132,6 +134,21 @@ async function performTask(task: Task) {
       console.error("unknown error", error);
     }
   }
+}
+
+async function performFetchTask(task: Task): Promise<any> {
+  if (task.type !== "fetch") {
+    throw new Error("Invalid task type for performFetchTask");
+  }
+
+  const { url, method, headers, body } = task.config;
+  const response = await fetch(url, {
+    method: method || "GET",
+    headers: headers || {},
+    body: body ? JSON.stringify(body) : null,
+  });
+
+  return await response.json();
 }
 
 // Monitor the queue and perform tasks

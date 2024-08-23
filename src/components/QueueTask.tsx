@@ -16,13 +16,16 @@ function addTaskToQueue(task: TaskConfig) {
 export const QueueTask = () => {
   // Example usage:
   const task: TaskConfig = {
-    url: "https://jsonplaceholder.typicode.com/todos/1",
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
+    type: "fetch",
+    config: {
+      url: "https://jsonplaceholder.typicode.com/todos/1",
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      name: "queue-test",
+      //  body: ,
     },
-    name: "queue-test",
-    // body: ,
   };
 
   const queueTask = () => {

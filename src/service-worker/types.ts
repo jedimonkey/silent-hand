@@ -1,14 +1,24 @@
 export type Task_Status = "executing" | "pending" | "complete" | "failed";
 
-export interface TaskConfig {
-  name: string;
-  url: string;
-  method?: string;
-  headers?: Record<string, string>;
-  body?: any;
-}
+type Task_Types = "fetch" | (string & {});
 
-export interface Task extends TaskConfig {
+export type TaskConfig =
+  | {
+      type: "fetch";
+      config: {
+        name: string;
+        url: string;
+        method?: string;
+        headers?: Record<string, string>;
+        body?: any;
+      };
+    }
+  | {
+      type: Task_Types;
+      config: Record<string, any>;
+    };
+
+export type Task = {
   id: number;
   createdAt: Date;
   executedAt?: Date;
@@ -17,7 +27,7 @@ export interface Task extends TaskConfig {
   status: Task_Status;
   result?: any;
   error?: string;
-}
+} & TaskConfig;
 
 export interface ExtendableMessageData {
   action: "enqueue";

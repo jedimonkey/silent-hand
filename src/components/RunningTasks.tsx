@@ -13,6 +13,7 @@ const RunningTasks: React.FC = () => {
         <thead>
           <tr className="bg-gray-200 dark:bg-gray-700">
             <th className="border p-2 dark:text-white">ID</th>
+            <th className="border p-2 dark:text-white">Type</th>
             <th className="border p-2 dark:text-white">Status</th>
             <th className="border p-2 dark:text-white">Last Updated</th>
           </tr>
@@ -21,6 +22,7 @@ const RunningTasks: React.FC = () => {
           {tasks.map((task) => (
             <tr key={task.id} className="bg-white dark:bg-gray-900">
               <td className="border p-2 dark:text-white">{task.id}</td>
+              <td className="border p-2 dark:text-white">{task.type}</td>
               <td className="border p-2 dark:text-white">{task.status}</td>
               <td className="border p-2 dark:text-white">
                 {task.updatedAt.toLocaleString()}
