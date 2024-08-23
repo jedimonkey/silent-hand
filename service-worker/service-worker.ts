@@ -6,21 +6,22 @@ import { monitorQueue } from "./lib";
 // public/service-worker.ts
 
 declare global {
-  interface Window {
+  interface ServiceWorkerGlobalScope {
     __WB_MANIFEST: string[];
   }
 }
 
-// Add these lines
-self.addEventListener('install', (event) => {
+declare const self: ServiceWorkerGlobalScope;
+
+self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
 });
 
-// precacheAndRoute(self.__WB_MANIFEST);
+precacheAndRoute(self.__WB_MANIFEST);
 // IndexedDB setup
 
 // Start monitoring the queue

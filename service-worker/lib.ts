@@ -110,7 +110,9 @@ async function performTask(task: Task) {
   } finally {
     // Call the "callback" (postMessage) with task data, regardless of success or failure
     try {
-      const clients = await self.clients.matchAll();
+      const clients = await (
+        self as unknown as ServiceWorkerGlobalScope
+      ).clients.matchAll();
       console.log("clients", clients);
       clients.forEach((client) => {
         console.log("send to each client", client);
