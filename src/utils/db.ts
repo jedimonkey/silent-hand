@@ -1,8 +1,4 @@
-import {
-  COMPLETED_STORE_NAME,
-  DB_NAME,
-  STORE_NAME,
-} from "../components/config";
+import { COMPLETED_STORE_NAME, DB_NAME, STORE_NAME } from "./config";
 
 let db: IDBDatabase | null = null;
 

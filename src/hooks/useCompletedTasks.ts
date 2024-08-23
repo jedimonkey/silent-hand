@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Task } from "../../service-worker/types";
-import { DB_NAME, COMPLETED_STORE_NAME } from "./config";
+import { DB_NAME, COMPLETED_STORE_NAME } from "../utils/config";
 
 interface CompletedTasksResult {
   totalTasks: number;

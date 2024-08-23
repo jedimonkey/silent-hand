@@ -1,4 +1,4 @@
-import { STORE_NAME, COMPLETED_STORE_NAME } from "@/components/config";
+import { STORE_NAME, COMPLETED_STORE_NAME } from "@/utils/config";
 import { ExtendableMessageEvent, Task, TaskConfig } from "./types";
 import { openDB } from "@/utils/db";
 

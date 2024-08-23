@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useCompletedTasks } from "./useCompletedTasks";
+import { useCompletedTasks } from "../hooks/useCompletedTasks";
 
 const CompletedTasks: React.FC = () => {
   const { totalTasks, tasks } = useCompletedTasks(5);

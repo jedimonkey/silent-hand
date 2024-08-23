@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useRunningTasks } from "./useRunningTasks";
+import { useRunningTasks } from "../hooks/useRunningTasks";
 
 const RunningTasks: React.FC = () => {
   const tasks = useRunningTasks();

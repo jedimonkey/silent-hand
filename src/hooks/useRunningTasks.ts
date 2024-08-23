@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Task } from "../../service-worker/types";
-import { STORE_NAME } from "./config";
+import { STORE_NAME } from "../utils/config";
 import { openDB, closeDB } from "../utils/db";
 
 export function useRunningTasks() {
