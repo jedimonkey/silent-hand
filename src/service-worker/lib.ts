@@ -43,20 +43,24 @@ function registerTask(
   taskHandlers[taskName] = callback;
 }
 
-// Add task to queue in IndexedDB
-async function enqueueTask(task: TaskConfig) {
+// Add task to queue in IndexedDB and immediately start performing it
+async function enqueueTask(task: TaskConfig): Promise<void> {
   const db = await openDB();
   const transaction = db.transaction(STORE_NAME, "readwrite");
   const store = transaction.objectStore(STORE_NAME);
   const now = new Date();
-  const taskWithDates = {
+  const taskWithDates: Omit<Task, "id"> = {
     ...task,
+    instanceId: swInstanceId,
     createdAt: now,
     updatedAt: now,
-    executedAt: null,
     status: "pending",
   };
-  const returnVal = store.add(taskWithDates);
+  const { result: id } = store.add(taskWithDates);
+
+  const registeredTask: Task = { ...taskWithDates, id: id as number };
+  // Immediately start performing the task
+  await performTask(registeredTask);
 }
 
 // Get the next task from the queue without removing it
@@ -208,7 +212,7 @@ self.addEventListener("message", (event) => {
   const data: ExtendableMessageData = event.data;
 
   if (data && data.action === "enqueue") {
-    enqueueTask(data.task);
+    event.waitUntil(enqueueTask(data.task));
   }
 });
 
