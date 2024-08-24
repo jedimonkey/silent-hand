@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { ExtendableMessageData, TaskConfig } from "../service-worker/types";
 
 function addTaskToQueue(task: TaskConfig) {
@@ -14,6 +15,7 @@ function addTaskToQueue(task: TaskConfig) {
 }
 
 export const QueueTask = () => {
+  const [sleepDuration, setSleepDuration] = useState(1);
   // Example usage:
   const task: TaskConfig = {
     type: "fetch",
@@ -36,7 +38,7 @@ export const QueueTask = () => {
     addTaskToQueue({
       type: "sleep",
       config: {
-        duration: 1000,
+        duration: sleepDuration * 1000,
       },
     });
   };
@@ -49,12 +51,21 @@ export const QueueTask = () => {
       >
         Queue Fetch
       </button>
-      <button
-        onClick={queueSleep}
-        className="border rounded-md border-slate-500 font-sans p-1 grow-0"
-      >
-        Queue Sleep
-      </button>
+      <div className="flex gap-2 items-center">
+        <input
+          type="number"
+          value={sleepDuration}
+          onChange={(e) => setSleepDuration(Number(e.target.value))}
+          className="border rounded-md border-slate-500 font-sans p-1 grow-0 w-16"
+          min="1"
+        />
+        <button
+          onClick={queueSleep}
+          className="border rounded-md border-slate-500 font-sans p-1 grow-0"
+        >
+          Queue Sleep
+        </button>
+      </div>
     </div>
   );
 };
