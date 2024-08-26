@@ -12,10 +12,12 @@ export type TaskConfig =
         headers?: Record<string, string>;
         body?: any;
       };
+      canRetry?: boolean;
     }
   | {
       type: Task_Types;
       config: Record<string, any>;
+      canRetry?: boolean;
     };
 
 export type Task = {

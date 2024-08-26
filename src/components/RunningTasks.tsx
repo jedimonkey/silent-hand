@@ -16,6 +16,7 @@ const RunningTasks: React.FC = () => {
             <th className="border p-2 dark:text-white">Type</th>
             <th className="border p-2 dark:text-white">Status</th>
             <th className="border p-2 dark:text-white">Last Updated</th>
+            <th className="border p-2 dark:text-white">Retry</th>
           </tr>
         </thead>
         <tbody>
@@ -26,6 +27,9 @@ const RunningTasks: React.FC = () => {
               <td className="border p-2 dark:text-white">{task.status}</td>
               <td className="border p-2 dark:text-white">
                 {task.updatedAt.toLocaleString()}
+              </td>
+              <td className="border p-2 dark:text-white">
+                {task.canRetry ? "Yes" : "No"}
               </td>
             </tr>
           ))}

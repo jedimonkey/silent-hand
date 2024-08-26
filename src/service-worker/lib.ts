@@ -56,11 +56,14 @@ async function enqueueTask(task: TaskConfig): Promise<void> {
     updatedAt: now,
     status: "pending",
   };
-  const { result: id } = store.add(taskWithDates);
+  const result = store.add(taskWithDates);
 
-  const registeredTask: Task = { ...taskWithDates, id: id as number };
-  // Immediately start performing the task
-  await performTask(registeredTask);
+  transaction.oncomplete = () => {
+    const { result: id } = result;
+    const registeredTask: Task = { ...taskWithDates, id: id as number };
+    // Immediately start performing the task
+    performTask(registeredTask);
+  };
 }
 
 // Get the next task from the queue without removing it
@@ -75,14 +78,26 @@ async function getNextTask() {
       const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
       if (cursor) {
         const task = cursor.value as Task;
-        if (task.status === "pending" || task.instanceId !== swInstanceId) {
+        if (
+          task.status === "pending" ||
+          (task.status === "executing" &&
+            task.instanceId !== swInstanceId &&
+            task.canRetry)
+        ) {
           resolve(task);
-        } else {
-          cursor.continue();
+          return;
+        } else if (
+          task.instanceId !== swInstanceId &&
+          !task.canRetry &&
+          task.status === "executing"
+        ) {
+          task.status = "failed";
+          task.error = "Process failed to finish";
+          moveTaskToCompleted(task);
         }
-      } else {
-        resolve(null); // No more tasks in the queue or no matching tasks found
       }
+      // Return nothing on this task, but the next cycle will get the next task.
+      resolve(null); // No more tasks in the queue or no matching tasks found
     };
 
     request.onerror = (event: Event) => {
@@ -156,10 +171,14 @@ async function performTask(task: Task) {
     await sendTaskUpdate(task);
   } catch (error) {
     if (error instanceof Error) {
-      console.log("Task failed:", error);
-      task.status = "failed";
-      task.error = error.message;
-      await moveTaskToCompleted(task);
+      if (task.canRetry && task.instanceId === swInstanceId) {
+        task.status = "pending";
+        await updateTaskInStorage(task);
+      } else {
+        task.status = "failed";
+        task.error = error.message;
+        await moveTaskToCompleted(task);
+      }
       await sendTaskUpdate(task);
     } else {
       console.error("unknown error", error);

@@ -16,7 +16,8 @@ function addTaskToQueue(task: TaskConfig) {
 
 export const QueueTask = () => {
   const [sleepDuration, setSleepDuration] = useState(1);
-  // Example usage:
+  const [canRetry, setCanRetry] = useState(false);
+
   const task: TaskConfig = {
     type: "fetch",
     config: {
@@ -26,8 +27,8 @@ export const QueueTask = () => {
         "Content-Type": "application/json",
       },
       name: "queue-test",
-      //  body: ,
     },
+    canRetry: canRetry,
   };
 
   const queueFetch = () => {
@@ -40,6 +41,7 @@ export const QueueTask = () => {
       config: {
         duration: sleepDuration * 1000,
       },
+      canRetry: canRetry,
     });
   };
 
@@ -65,6 +67,15 @@ export const QueueTask = () => {
         >
           Queue Sleep
         </button>
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          checked={canRetry}
+          onChange={(e) => setCanRetry(e.target.checked)}
+          id="canRetry"
+        />
+        <label htmlFor="canRetry">Can Retry</label>
       </div>
     </div>
   );

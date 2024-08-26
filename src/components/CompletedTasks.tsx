@@ -15,7 +15,7 @@ const CompletedTasks: React.FC = () => {
             <th className="border p-2 dark:text-white">ID</th>
             <th className="border p-2 dark:text-white">Type</th>
             <th className="border p-2 dark:text-white">Status</th>
-            <th className="border p-2 dark:text-white">Time Taken</th>
+            <th className="border p-2 dark:text-white">Time</th>
           </tr>
         </thead>
         <tbody>
@@ -25,26 +25,39 @@ const CompletedTasks: React.FC = () => {
               <td className="border p-2 dark:text-white">{task.type}</td>
               <td className="border p-2 dark:text-white">{task.status}</td>
               <td className="border p-2 dark:text-white">
-                <div>
-                  Total:{" "}
-                  {(
-                    (new Date(task.updatedAt).getTime() -
-                      new Date(task.createdAt).getTime()) /
-                    1000
-                  ).toFixed(2)}
-                  s
-                </div>
-                <div>
-                  Execution:{" "}
-                  {task.executedAt
-                    ? (
+                {task.status === "failed" ? (
+                  <>
+                    <div>
+                      Queued: {new Date(task.createdAt).toLocaleString()}
+                    </div>
+                    <div>
+                      Failed: {new Date(task.updatedAt).toLocaleString()}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      Total:{" "}
+                      {(
                         (new Date(task.updatedAt).getTime() -
-                          new Date(task.executedAt).getTime()) /
+                          new Date(task.createdAt).getTime()) /
                         1000
-                      ).toFixed(2)
-                    : "N/A"}
-                  s
-                </div>
+                      ).toFixed(2)}
+                      s
+                    </div>
+                    <div>
+                      Execution:{" "}
+                      {task.executedAt
+                        ? (
+                            (new Date(task.updatedAt).getTime() -
+                              new Date(task.executedAt).getTime()) /
+                            1000
+                          ).toFixed(2)
+                        : "N/A"}
+                      s
+                    </div>
+                  </>
+                )}
               </td>
             </tr>
           ))}
